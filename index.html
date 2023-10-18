@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Web3 Timestamp</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+</head>
+
+<body>
+    <h1>Web3 Timestamp</h1>
+
+    <button id="connectButton" onclick="connectWallet()">Connect Wallet</button>
+    <button id="disconnectButton" style="display: none;" onclick="disconnectWallet()">Disconnect</button>
+
+    <p id="walletStatus"></p>
+    <p id="connectionStatus"></p>
+
+    <div id="connectedSection" style="display: none;">
+        <h2>File Management</h2>
+        <label for="fileInput">Upload File:</label>
+        <input type="file" id="fileInput" onchange="handleFile(this)" />
+        <div id="progressBar" style="display: none;">
+            <progress id="fileProgress" value="0" max="100"></progress>
+            <p id="progressStatus">Loading...</p>
+        </div>
+        <p id="hashResult"></p>
+        <div>
+            <label for="fileName">File Name:</label>
+            <br>
+            <input type="text" id="fileName" name="fileName">
+        </div>
+        <div>
+            <label for="fileDescription">File Description:</label>
+            <br>
+            <textarea id="fileDescription" name="fileDescription" rows="4" cols="50"></textarea>
+        </div>
+        <button id="addDocumentButton" onclick="addDocumentToContract( )" disabled="true">Add Document</button>
+    </div>
+
+    <script>
+        let isConnected = false;
+        let documentHash;
+
+        async function connectWallet() {
+            // Check if there is an instance of web3 already present
+            if (window.ethereum) {
+                window.web3 = new Web3(window.ethereum);
+                try {
+                    // Reset connection status
+                    const connectionStatus = document.getElementById("connectionStatus");
+                    connectionStatus.innerText = "";
+
+                    // Request access to the wallet
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    // Wallet access granted
+                    console.log("Connection to wallet established!");
+
+                    // Update UI
+                    document.getElementById("connectButton").style.display = "none";
+                    document.getElementById("disconnectButton").style.display = "inline";
+                    document.getElementById("connectedSection").style.display = "block";
+                    isConnected = true;
+                } catch (error) {
+                    // User denied wallet access
+                    const connectionStatus = document.getElementById("connectionStatus");
+                    connectionStatus.innerText = "Connection to wallet was denied. Please approve the connection to continue.";
+                    console.error("User denied wallet access");
+                }
+            } else {
+                // Wallet not installed in the browser
+                const walletStatus = document.getElementById("walletStatus");
+                walletStatus.innerText = "No Ethereum wallet detected. Please install MetaMask or another Ethereum-compatible wallet.";
+            }
+        }
+
+        function disconnectWallet() {
+            // Reset UI
+            document.getElementById("connectButton").style.display = "inline";
+            document.getElementById("disconnectButton").style.display = "none";
+            document.getElementById("connectedSection").style.display = "none";
+            isConnected = false;
+        }
+
+        function handleFile(fileInput) {
+            const progressBar = document.getElementById("progressBar");
+            const progressStatus = document.getElementById("progressStatus");
+            const hashResult = document.getElementById('hashResult');
+            const addDocumentButton = document.getElementById('addDocumentButton');
+            // Limpia el contenido del hashResult al iniciar la carga de un nuevo archivo
+            hashResult.innerText = "";
+            addDocumentButton.disabled = true;
+
+            const file = fileInput.files[0];
+
+            const reader = new FileReader();
+            reader.onloadstart = function (event) {
+                progressBar.style.display = "block";
+                fileInput.disabled = true;
+            };
+            reader.onprogress = function (event) {
+                if (event.lengthComputable) {
+                    const percentLoaded = Math.round((event.loaded / event.total) * 100);
+                    progressBar.value = percentLoaded;
+                    progressStatus.innerText = `Loading... ${percentLoaded}%`;
+                }
+            };
+            reader.onload = function (event) {
+                const fileData = event.target.result;
+                const wordArray = CryptoJS.enc.Utf8.parse(fileData);
+                const hash = CryptoJS.SHA256(wordArray);
+                documentHash = '0x' + hash.toString().substring(0, 64);;
+                hashResult.innerText = `Hash of the file is: ${hash.toString()}`;
+
+                // Reset progress bar and enable input
+                progressBar.style.display = "none";
+                progressBar.value = 0;
+                fileInput.disabled = false;
+                addDocumentButton.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        /*Functions for contract interaction*/
+        async function addDocumentToContract( ) {
+            try {
+                const documentName = document.getElementById('fileName').value;
+                const documentDescription = document.getElementById('fileDescription').value;
+
+
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                const account = accounts[0];
+
+                //https://goerli.etherscan.io/tx/0xa70b899a976112d7786601dac2abb7beb2a94bab59f9014fb08f0135c58cab90
+                const contractAddress = '0x7B510f3e4C58dCA7be2508f3Cfe0B9162CEf64F8';//'DIRECCION_DEL_CONTRATO'; // Reemplaza 'DIRECCION_DEL_CONTRATO' con la dirección real de tu contrato
+                const contractABI = [
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "hash",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "documentName",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "description",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "DocumentAdded",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_hash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "string",
+				"name": "_documentName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_description",
+				"type": "string"
+			}
+		],
+		"name": "addDocument",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "documents",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "hash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "string",
+				"name": "documentName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "description",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "userAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "_hash",
+				"type": "bytes32"
+			}
+		],
+		"name": "getTimestamp",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];//[...]; // Reemplaza '...' con tu ABI de contrato
+
+                const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+                await contract.methods.addDocument(documentHash, documentName, documentDescription).send({ from: account })
+                    .on('transactionHash', function (hash) {
+                        console.log('Transaction Hash: ', hash);
+                        // Aquí puedes mostrar un mensaje al usuario que la transacción ha sido enviada
+                    })
+                    .on('confirmation', function (confirmationNumber, receipt) {
+                        console.log('Confirmation Number: ', confirmationNumber);
+                        // Aquí puedes mostrar un mensaje al usuario que la transacción ha sido confirmada
+                        console.log('Documento añadido correctamente al contrato.');
+                    })
+                    .on('error', function (error) {
+                        console.error('Transaction Error: ', error);
+                        // Aquí puedes mostrar un mensaje de error al usuario que la transacción ha fallado
+                    });
+                
+            } catch (error) {
+                console.error('Error al añadir el documento al contrato:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>
