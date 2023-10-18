@@ -5,6 +5,9 @@
     <title>Web3 Timestamp</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+    <script type="module" src="abi.js"></script>
+    <script type="module" src="contractAddress.js"></script>
+
 </head>
 
 <body>
@@ -122,137 +125,13 @@
         }
 
         /*Functions for contract interaction*/
-        async function addDocumentToContract( ) {
+        async function addDocumentToContract() {
             try {
                 const documentName = document.getElementById('fileName').value;
                 const documentDescription = document.getElementById('fileDescription').value;
 
-
                 const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
                 const account = accounts[0];
-
-                //https://goerli.etherscan.io/tx/0xa70b899a976112d7786601dac2abb7beb2a94bab59f9014fb08f0135c58cab90
-                const contractAddress = '0x7B510f3e4C58dCA7be2508f3Cfe0B9162CEf64F8';//'DIRECCION_DEL_CONTRATO'; // Reemplaza 'DIRECCION_DEL_CONTRATO' con la dirección real de tu contrato
-                const contractABI = [
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "user",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "bytes32",
-				"name": "hash",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "documentName",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "description",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			}
-		],
-		"name": "DocumentAdded",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "_hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "_documentName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_description",
-				"type": "string"
-			}
-		],
-		"name": "addDocument",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"name": "documents",
-		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "hash",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "string",
-				"name": "documentName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "description",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "userAddress",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "_hash",
-				"type": "bytes32"
-			}
-		],
-		"name": "getTimestamp",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-];//[...]; // Reemplaza '...' con tu ABI de contrato
 
                 const contract = new web3.eth.Contract(contractABI, contractAddress);
 
@@ -270,7 +149,7 @@
                         console.error('Transaction Error: ', error);
                         // Aquí puedes mostrar un mensaje de error al usuario que la transacción ha fallado
                     });
-                
+
             } catch (error) {
                 console.error('Error al añadir el documento al contrato:', error);
             }
