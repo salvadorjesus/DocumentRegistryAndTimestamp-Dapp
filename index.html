@@ -3,7 +3,7 @@
 
 <head>
     <title>Web3 Timestamp</title>
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.1/dist/web3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
 </head>
 
@@ -35,7 +35,9 @@
             <br>
             <textarea id="fileDescription" name="fileDescription" rows="4" cols="50"></textarea>
         </div>
-        <button id="addDocumentButton" onclick="addDocumentToContract( )" disabled="true">Add Document</button>
+        <button id="addDocumentButton" onclick="addDocumentToContract()" disabled="true">Add Document</button>
+
+        <p id="transactionInfo"></p>
     </div>
     <script>
         var contractABI;
@@ -44,15 +46,13 @@
         fetch("contractAbi.json")
             .then((response) => response.json())
             .then((data) => {
-                // Aquí puedes hacer lo que quieras con los datos
                 contractABI = data;
             });
         fetch("contractAddress.txt")
             .then((response) => response.text())
             .then((text) => {
-                // Aquí puedes hacer lo que quieras con los datos
                 contractAddress = text;
-                console.log("CONTRACT ADDRESS " +   contractAddress);
+                console.log("CONTRACT ADDRESS " + contractAddress);
             });
 
         let isConnected = false;
@@ -102,8 +102,9 @@
             const progressBar = document.getElementById("progressBar");
             const progressStatus = document.getElementById("progressStatus");
             const hashResult = document.getElementById('hashResult');
-            const addDocumentButton = document.getElementById('addDocumentButton');
-            // Limpia el contenido del hashResult al iniciar la carga de un nuevo archivo
+            const transactionInfo = document.getElementById('transactionInfo');
+            const fileNameInput = document.getElementById('fileName');
+
             hashResult.innerText = "";
             addDocumentButton.disabled = true;
 
@@ -127,6 +128,7 @@
                 const hash = CryptoJS.SHA256(wordArray);
                 documentHash = '0x' + hash.toString().substring(0, 64);;
                 hashResult.innerText = `Hash of the file is: ${hash.toString()}`;
+                fileNameInput.value = file.name;
 
                 // Reset progress bar and enable input
                 progressBar.style.display = "none";
@@ -140,32 +142,52 @@
         /*Functions for contract interaction*/
         async function addDocumentToContract() {
             try {
+                const addDocumentButton = document.getElementById('addDocumentButton');
+                const transactionInfo = document.getElementById('transactionInfo');
                 const documentName = document.getElementById('fileName').value;
                 const documentDescription = document.getElementById('fileDescription').value;
+                let etherscanLink;
+
+                addDocumentButton.disabled = true;
 
                 const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
                 const account = accounts[0];
 
                 const contract = new web3.eth.Contract(contractABI, contractAddress);
+                // web3.eth.handleRevert = true;
 
                 await contract.methods.addDocument(documentHash, documentName, documentDescription).send({ from: account })
                     .on('transactionHash', function (hash) {
                         console.log('Transaction Hash: ', hash);
-                        // Aquí puedes mostrar un mensaje al usuario que la transacción ha sido enviada
+                        etherscanLink = generateEtherscanLink(hash);
+                        transactionInfo.innerHTML = "Transaction sent. Waiting for confirmation. "+etherscanLink;
                     })
-                    .on('confirmation', function (confirmationNumber, receipt) {
+                    .once('confirmation', function (confirmationNumber, receipt) {
                         console.log('Confirmation Number: ', confirmationNumber);
-                        // Aquí puedes mostrar un mensaje al usuario que la transacción ha sido confirmada
-                        console.log('Documento añadido correctamente al contrato.');
+                        if (receipt.status == 1)
+                            transactionInfo.innerHTML = "Document added to the blockchain. "+etherscanLink
                     })
                     .on('error', function (error) {
-                        console.error('Transaction Error: ', error);
-                        // Aquí puedes mostrar un mensaje de error al usuario que la transacción ha fallado
+                        console.error('Transaction error: ', error);
+                        transactionInfo.innerHTML = "Transaction error! "+ etherscanLink;
                     });
 
             } catch (error) {
-                console.error('Error al añadir el documento al contrato:', error);
+                console.error('Error when calling AddDocumentToContract:', error);
+                //Skip if on error has already been called.
+                if(!transactionInfo.innerHTML.includes("error"))
+                    transactionInfo.innerHTML = "Transaction failed! "+ etherscanLink;
             }
+            finally {
+                addDocumentButton.disabled = false;
+            }
+        }
+
+        /*Auxiliary functions*/
+        function generateEtherscanLink(transactionHash) {
+            const etherscanURL = `https://goerli.etherscan.io/tx/${transactionHash}`;
+            const linkHTML = `<a href="${etherscanURL}" target="_blank">View Transaction on Etherscan</a>`;
+            return linkHTML;
         }
     </script>
 </body>
