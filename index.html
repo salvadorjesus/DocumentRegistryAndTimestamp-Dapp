@@ -17,7 +17,7 @@
     <p id="connectionStatus"></p>
 
     <div id="connectedSection" style="display: none;">
-        <h2>File Management</h2>
+        <h2>File management</h2>
         <label for="fileInput">Upload File:</label>
         <input type="file" id="fileInput" onchange="handleFile(this)" />
         <div id="progressBar" style="display: none;">
@@ -25,6 +25,7 @@
             <p id="progressStatus">Loading...</p>
         </div>
         <p id="hashResult"></p>
+        <h2>Register file on the blockchain</h2>
         <div>
             <label for="fileName">File Name:</label>
             <br>
@@ -39,7 +40,12 @@
 
         <p id="transactionInfo"></p>
 
-        <h2>Document Registry</h2>
+        <h2>Search for file on the blockchain</h2>
+        <button id="searchDocumentButton" onclick="searchForDocumentOnTheBlockchain()" disabled="true">Search
+            document</button>
+        <p id="searchResult"></p>
+
+        <h2>Your registered documents</h2>
         <p>Documents registered for the connected user.</p>
         <select id="fileDropdown" onchange="displayFileDetails()"></select>
 
@@ -47,8 +53,7 @@
         <p id="selectedFileDescription"></p>
         <p id="selectedFileTimestamp"></p>
 
-        <button onclick="getEventsAndRefresh()">Get User Events</button>
-
+        <button onclick="getEventsAndRefresh()">Get your documents</button>
     </div>
 
 
@@ -118,9 +123,11 @@
             const hashResult = document.getElementById('hashResult');
             const transactionInfo = document.getElementById('transactionInfo');
             const fileNameInput = document.getElementById('fileName');
+            const searchDocumentButton = document.getElementById('searchDocumentButton');
 
             hashResult.innerText = "";
             addDocumentButton.disabled = true;
+            searchDocumentButton.disabled = true;
 
             const file = fileInput.files[0];
 
@@ -149,6 +156,7 @@
                 progressBar.value = 0;
                 fileInput.disabled = false;
                 addDocumentButton.disabled = false;
+                searchDocumentButton.disabled = false;
             };
             reader.readAsDataURL(file);
         }
@@ -235,6 +243,37 @@
 
             } catch (error) {
                 console.error('Error getting contract events to update the registry:', error);
+            }
+        }
+
+        async function searchForDocumentOnTheBlockchain() {
+            try {
+                const searchResult = document.getElementById('searchResult');
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                const account = accounts[0];
+                const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+                const documentEvents = await contract.getPastEvents('DocumentAdded', {
+                    filter: { hash: documentHash },
+                    fromBlock: 0,
+                    toBlock: 'latest'
+                });
+
+                if (documentEvents.length === 0) {
+                    searchResult.innerText = "This document is not on the blockchain.";
+                } else {
+                    searchResult.innerText = "Document registered by: \n";
+
+                    documentEvents.forEach(event => {
+                        const eventInfo = `User: ${event.returnValues.user}, 
+                                        Document Name: ${event.returnValues.documentName}, 
+                                        Description: ${event.returnValues.description}, 
+                                        Timestamp: ${new Date(parseInt(event.returnValues.timestamp) * 1000)}\n`;
+                        searchResult.innerText += eventInfo;
+                    });
+                }
+            } catch (error) {
+                console.error('Error searching for document on the blockchain:', error);
             }
         }
 
