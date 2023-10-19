@@ -8,7 +8,7 @@
 </head>
 
 <body>
-    <h1>Web3 Timestamp</h1>
+    <h1>Web3 Document Registry and Timestamp</h1>
 
     <button id="connectButton" onclick="connectWallet()">Connect Wallet</button>
     <button id="disconnectButton" style="display: none;" onclick="disconnectWallet()">Disconnect</button>
@@ -17,7 +17,7 @@
     <p id="connectionStatus"></p>
 
     <div id="connectedSection" style="display: none;">
-        <h2>File management</h2>
+        <h2>Document selection</h2>
         <label for="fileInput">Upload File:</label>
         <input type="file" id="fileInput" onchange="handleFile(this)" />
         <div id="progressBar" style="display: none;">
@@ -25,7 +25,7 @@
             <p id="progressStatus">Loading...</p>
         </div>
         <p id="hashResult"></p>
-        <h2>Register file on the blockchain</h2>
+        <h2>Register document on the blockchain</h2>
         <div>
             <label for="fileName">File Name:</label>
             <br>
@@ -40,7 +40,7 @@
 
         <p id="transactionInfo"></p>
 
-        <h2>Search for file on the blockchain</h2>
+        <h2>Search for document on the blockchain</h2>
         <button id="searchDocumentButton" onclick="searchForDocumentOnTheBlockchain()" disabled="true">Search
             document</button>
         <p id="searchResult"></p>
@@ -265,10 +265,10 @@
                     searchResult.innerText = "Document registered by: \n";
 
                     documentEvents.forEach(event => {
-                        const eventInfo = `User: ${event.returnValues.user}, 
+                        const eventInfo = `\nUser: ${event.returnValues.user}, 
                                         Document Name: ${event.returnValues.documentName}, 
                                         Description: ${event.returnValues.description}, 
-                                        Timestamp: ${new Date(parseInt(event.returnValues.timestamp) * 1000)}\n`;
+                                        Timestamp: ${new Date(parseInt(event.returnValues.timestamp) * 1000).toLocaleString()}\n`;
                         searchResult.innerText += eventInfo;
                     });
                 }
@@ -319,8 +319,6 @@
             return option;
         }
 
-
     </script>
 </body>
-
 </html>
