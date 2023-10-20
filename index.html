@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Web3 Document Registry</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.1/dist/web3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+</head>
+
+<body>
+    <h1>Web3 Document Registry and Timestamp</h1>
+
+    <button id="connectButton" onclick="connectWallet()">Connect Wallet</button>
+    <button id="disconnectButton" style="display: none;" onclick="disconnectWallet()">Disconnect</button>
+
+    <p id="walletStatus"></p>
+    <p id="connectionStatus"></p>
+
+    <div id="connectedSection" style="display: none;">
+        <h2>Document selection</h2>
+        <label for="fileInput">Upload File:</label>
+        <input type="file" id="fileInput" onchange="handleFile(this)" />
+        <div id="progressBar" style="display: none;">
+            <progress id="fileProgress" value="0" max="100"></progress>
+            <p id="progressStatus">Loading...</p>
+        </div>
+        <p id="hashResult"></p>
+        <h2>Register document on the blockchain</h2>
+        <div>
+            <label for="fileName">File Name:</label>
+            <br>
+            <input type="text" id="fileName" name="fileName">
+        </div>
+        <div>
+            <label for="fileDescription">File Description:</label>
+            <br>
+            <textarea id="fileDescription" name="fileDescription" rows="4" cols="50"></textarea>
+        </div>
+        <button id="addDocumentButton" onclick="addDocumentToContract()" disabled="true">Add Document</button>
+
+        <p id="transactionInfo"></p>
+
+        <h2>Search for document on the blockchain</h2>
+        <button id="searchDocumentButton" onclick="searchForDocumentOnTheBlockchain()" disabled="true">Search
+            document</button>
+        <p id="searchResult"></p>
+
+        <h2>Your registered documents</h2>
+        <p>Documents registered for the connected user.</p>
+        <select id="fileDropdown" onchange="displayFileDetails()"></select>
+
+        <p id="selectedFileHash"></p>
+        <p id="selectedFileDescription"></p>
+        <p id="selectedFileTimestamp"></p>
+
+        <button onclick="getEventsAndRefresh()">Get your documents</button>
+    </div>
+
+
+    <script>
+        var contractABI;
+        var contractAddress;
+
+        fetch("contractABI.json")
+            .then((response) => response.json())
+            .then((data) => {
+                contractABI = data;
+            });
+        fetch("contractAddress.txt")
+            .then((response) => response.text())
+            .then((text) => {
+                contractAddress = text;
+                console.log("CONTRACT ADDRESS " + contractAddress);
+            });
+
+        var emitedContractEvents;
+        let isConnected = false;
+        let documentHash;
+
+        async function connectWallet() {
+            // Check if there is an instance of web3 already present
+            if (window.ethereum) {
+                window.web3 = new Web3(window.ethereum);
+                try {
+                    // Reset connection status
+                    const connectionStatus = document.getElementById("connectionStatus");
+                    connectionStatus.innerText = "";
+
+                    // Request access to the wallet
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    // Wallet access granted
+                    console.log("Connection to wallet established!");
+
+                    // Update UI
+                    document.getElementById("connectButton").style.display = "none";
+                    document.getElementById("disconnectButton").style.display = "inline";
+                    document.getElementById("connectedSection").style.display = "block";
+                    isConnected = true;
+                } catch (error) {
+                    // User denied wallet access
+                    const connectionStatus = document.getElementById("connectionStatus");
+                    connectionStatus.innerText = "Connection to wallet was denied. Please approve the connection to continue.";
+                    console.error("User denied wallet access");
+                }
+            } else {
+                // Wallet not installed in the browser
+                const walletStatus = document.getElementById("walletStatus");
+                walletStatus.innerText = "No Ethereum wallet detected. Please install MetaMask or another Ethereum-compatible wallet.";
+            }
+        }
+
+        function disconnectWallet() {
+            // Reset UI
+            document.getElementById("connectButton").style.display = "inline";
+            document.getElementById("disconnectButton").style.display = "none";
+            document.getElementById("connectedSection").style.display = "none";
+            isConnected = false;
+        }
+
+        function handleFile(fileInput) {
+            const progressBar = document.getElementById("progressBar");
+            const progressStatus = document.getElementById("progressStatus");
+            const hashResult = document.getElementById('hashResult');
+            const transactionInfo = document.getElementById('transactionInfo');
+            const fileNameInput = document.getElementById('fileName');
+            const searchDocumentButton = document.getElementById('searchDocumentButton');
+
+            hashResult.innerText = "";
+            addDocumentButton.disabled = true;
+            searchDocumentButton.disabled = true;
+
+            const file = fileInput.files[0];
+
+            const reader = new FileReader();
+            reader.onloadstart = function (event) {
+                progressBar.style.display = "block";
+                fileInput.disabled = true;
+            };
+            reader.onprogress = function (event) {
+                if (event.lengthComputable) {
+                    const percentLoaded = Math.round((event.loaded / event.total) * 100);
+                    progressBar.value = percentLoaded;
+                    progressStatus.innerText = `Loading... ${percentLoaded}%`;
+                }
+            };
+            reader.onload = function (event) {
+                const fileData = event.target.result;
+                const wordArray = CryptoJS.enc.Utf8.parse(fileData);
+                const hash = CryptoJS.SHA256(wordArray);
+                documentHash = '0x' + hash.toString().substring(0, 64);;
+                hashResult.innerText = `Hash of the file is: ${hash.toString()}`;
+                fileNameInput.value = file.name;
+
+                // Reset progress bar and enable input
+                progressBar.style.display = "none";
+                progressBar.value = 0;
+                fileInput.disabled = false;
+                addDocumentButton.disabled = false;
+                searchDocumentButton.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        /*Functions for contract interaction*/
+        async function addDocumentToContract() {
+            try {
+                const addDocumentButton = document.getElementById('addDocumentButton');
+                const transactionInfo = document.getElementById('transactionInfo');
+                const documentName = document.getElementById('fileName').value;
+                const documentDescription = document.getElementById('fileDescription').value;
+                let etherscanLink;
+
+                addDocumentButton.disabled = true;
+
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                const account = accounts[0];
+
+                const contract = new web3.eth.Contract(contractABI, contractAddress);
+                // web3.eth.handleRevert = true;
+
+                await contract.methods.addDocument(documentHash, documentName, documentDescription).send({ from: account })
+                    .on('transactionHash', function (hash) {
+                        console.log('Transaction Hash: ', hash);
+                        etherscanLink = generateEtherscanLink(hash);
+                        transactionInfo.innerHTML = "Transaction sent. Waiting for confirmation. " + etherscanLink;
+                    })
+                    .once('confirmation', function (confirmationNumber, receipt) {
+                        console.log('Confirmation Number: ', confirmationNumber);
+                        if (receipt.status == 1)
+                            transactionInfo.innerHTML = "Document added to the blockchain. " + etherscanLink
+                    })
+                    .on('error', function (error) {
+                        console.error('Transaction error: ', error);
+                        transactionInfo.innerHTML = "Transaction error! " + etherscanLink;
+                    });
+
+            } catch (error) {
+                console.error('Error when calling AddDocumentToContract:', error);
+                //Skip if on error has already been called.
+                if (!transactionInfo.innerHTML.includes("error"))
+                    transactionInfo.innerHTML = "Transaction failed! " + etherscanLink;
+            }
+            finally {
+                addDocumentButton.disabled = false;
+            }
+        }
+
+        /*Registered documents management*/
+        async function getEventsAndRefresh() {
+            try {
+                const dropdown = document.getElementById("fileDropdown");
+
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                const account = accounts[0];
+                const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+                // Escucha el evento DocumentAdded
+                const myEvent = contract.events.DocumentAdded({ filter: { user: account } })
+                    .on('data', function (event) {
+                        const option = createOptionFromEvent(event);
+                        dropdown.add(option);
+                        //TODO verify that it works
+                    })
+                    .on('error', function (error) {
+                        console.error('Error getting contract events:', error);
+                    });
+
+                // Acceder a los eventos anteriores
+                emitedContractEvents = await contract.getPastEvents('DocumentAdded', {
+                    filter: { user: account },
+                    fromBlock: 0,
+                    toBlock: 'latest'
+                });
+
+                dropdown.innerHTML = "";
+
+                emitedContractEvents.forEach(event => {
+                    const option = createOptionFromEvent(event);
+                    dropdown.add(option);
+                });
+
+                displayFileDetails();
+
+            } catch (error) {
+                console.error('Error getting contract events to update the registry:', error);
+            }
+        }
+
+        async function searchForDocumentOnTheBlockchain() {
+            try {
+                const searchResult = document.getElementById('searchResult');
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                const account = accounts[0];
+                const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+                const documentEvents = await contract.getPastEvents('DocumentAdded', {
+                    filter: { hash: documentHash },
+                    fromBlock: 0,
+                    toBlock: 'latest'
+                });
+
+                if (documentEvents.length === 0) {
+                    searchResult.innerText = "This document is not on the blockchain.";
+                } else {
+                    searchResult.innerText = "Document registered by: \n";
+
+                    documentEvents.forEach(event => {
+                        const eventInfo = `\nUser: ${event.returnValues.user}, 
+                                        Document Name: ${event.returnValues.documentName}, 
+                                        Description: ${event.returnValues.description}, 
+                                        Timestamp: ${new Date(parseInt(event.returnValues.timestamp) * 1000).toLocaleString()}\n`;
+                        searchResult.innerText += eventInfo;
+                    });
+                }
+            } catch (error) {
+                console.error('Error searching for document on the blockchain:', error);
+            }
+        }
+
+        function displayFileDetails() {
+            const fileDropdown = document.getElementById('fileDropdown');
+            const selectedOption = fileDropdown.options[fileDropdown.selectedIndex];
+            const selectedFileHash = document.getElementById('selectedFileHash');
+            const selectedFileDescription = document.getElementById('selectedFileDescription');
+            const selectedFileTimestamp = document.getElementById('selectedFileTimestamp');
+
+            if (selectedOption && selectedOption.value) {
+                const optionValue = JSON.parse(selectedOption.value);
+                selectedFileHash.innerText = `File Hash: ${optionValue.hash}`;
+                selectedFileDescription.innerText = `File Description: ${optionValue.description}`;
+
+                const timestamp = new Date(optionValue.timestamp * 1000);
+                const formattedTimestamp = timestamp.toLocaleString();
+                selectedFileTimestamp.innerText = `Timestamp: ${formattedTimestamp}`;
+            } else {
+                selectedFileHash.innerText = "";
+                selectedFileDescription.innerText = "";
+                selectedFileTimestamp.innerText = "";
+            }
+        }
+
+
+        /*Auxiliary functions*/
+        function generateEtherscanLink(transactionHash) {
+            const etherscanURL = `https://goerli.etherscan.io/tx/${transactionHash}`;
+            const linkHTML = `<a href="${etherscanURL}" target="_blank">View Transaction on Etherscan</a>`;
+            return linkHTML;
+        }
+
+        function createOptionFromEvent(event) {
+            const option = document.createElement('option');
+            const optionValue = {
+                hash: event.returnValues.hash,
+                description: event.returnValues.description,
+                timestamp: event.returnValues.timestamp
+            };
+            option.text = event.returnValues.documentName;
+            option.value = JSON.stringify(optionValue); // Convertir a cadena
+            return option;
+        }
+
+    </script>
+</body>
+</html>
