@@ -45,7 +45,7 @@
             <p id="progressStatus">Loading...</p>
         </div>
         <p id="hashResult"></p>
-    
+
         <h2>Search for a document on the registry</h2>
         <p>Look up for the selected document on the blockchain</p>
         <button id="searchDocumentButton" onclick="searchForDocumentOnTheBlockchain()" disabled="true">Search
@@ -82,6 +82,7 @@
 
 
     <script>
+        //Get contract address and contract ABI from file
         var contractABI;
         var contractAddress;
 
@@ -97,9 +98,11 @@
                 console.log("CONTRACT ADDRESS " + contractAddress);
             });
 
+        //Variables    
         var emitedContractEvents;
         let isConnected = false;
         let documentHash;
+        let currentAccount;
 
         async function connectWallet() {
             // Check if there is an instance of web3 already present
@@ -111,7 +114,7 @@
                     connectionStatus.innerText = "";
 
                     // Request access to the wallet
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    currentAccount = (await window.ethereum.request({ method: 'eth_requestAccounts' }))[0];
                     // Wallet access granted
                     console.log("Connection to wallet established!");
 
@@ -196,10 +199,9 @@
 
                 addDocumentButton.disabled = true;
 
-                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                const account = accounts[0];
+                const account = currentAccount;
 
-                const contract = new web3.eth.Contract(contractABI, contractAddress);
+                const contract = await getContract();
                 // web3.eth.handleRevert = true;
 
                 await contract.methods.addDocument(documentHash, documentName, documentDescription).send({ from: account })
@@ -234,22 +236,21 @@
             try {
                 const dropdown = document.getElementById("fileDropdown");
 
-                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                const account = accounts[0];
-                const contract = new web3.eth.Contract(contractABI, contractAddress);
+                const account = currentAccount;
+                const contract = await getContract();
 
-                // Escucha el evento DocumentAdded
+                // Listen to the event evento DocumentAdded
                 const myEvent = contract.events.DocumentAdded({ filter: { user: account } })
                     .on('data', function (event) {
                         const option = createOptionFromEvent(event);
+                        //TODO This add the element to the dropdown twice
                         dropdown.add(option);
-                        //TODO verify that it works
                     })
                     .on('error', function (error) {
                         console.error('Error getting contract events:', error);
                     });
 
-                // Acceder a los eventos anteriores
+                // Access previous events
                 emitedContractEvents = await contract.getPastEvents('DocumentAdded', {
                     filter: { user: account },
                     fromBlock: 0,
@@ -273,9 +274,7 @@
         async function searchForDocumentOnTheBlockchain() {
             try {
                 const searchResult = document.getElementById('searchResult');
-                // const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                // const account = accounts[0];
-                const contract = new web3.eth.Contract(contractABI, contractAddress);
+                let contract = await getContract();
 
                 const documentEvents = await contract.getPastEvents('DocumentAdded', {
                     filter: { hash: documentHash },
@@ -343,6 +342,11 @@
             return option;
         }
 
+        async function getContract() {
+            let contract;
+            contract = new web3.eth.Contract(contractABI, contractAddress);
+            return contract;
+        }
     </script>
 </body>
 
