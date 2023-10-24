@@ -31,6 +31,7 @@
     <button id="connectButton" onclick="connectWallet()">Connect Wallet</button>
     <button id="disconnectButton" style="display: none;" onclick="disconnectWallet()">Disconnect</button>
 
+    <p id="networkStatus"></p>
     <p id="walletStatus"></p>
     <p id="connectionStatus"></p>
 
@@ -84,6 +85,7 @@
     <script>
         //Get contract address and contract ABI from file
         var contractABI;
+        var contractAddressBook;
         var contractAddress;
 
         fetch("contractABI.json")
@@ -91,11 +93,10 @@
             .then((data) => {
                 contractABI = data;
             });
-        fetch("contractAddress.txt")
-            .then((response) => response.text())
-            .then((text) => {
-                contractAddress = text;
-                console.log("CONTRACT ADDRESS " + contractAddress);
+        fetch("contractAddress.json")
+            .then((response) => response.json())
+            .then((data) => {
+                contractAddressBook = data;
             });
 
         //Variables    
@@ -103,6 +104,7 @@
         let isConnected = false;
         let documentHash;
         let currentAccount;
+        let network;
 
         async function connectWallet() {
             // Check if there is an instance of web3 already present
@@ -115,8 +117,13 @@
 
                     // Request access to the wallet
                     currentAccount = (await window.ethereum.request({ method: 'eth_requestAccounts' }))[0];
+                    let chainID = await ethereum.request({ method: 'eth_chainId' });
+                    networkChanged(chainID);
                     // Wallet access granted
                     console.log("Connection to wallet established!");
+                    ethereum.on('chainChanged', (chainId) => {
+                        networkChanged(chainId);
+                    });
 
                     // Update UI
                     document.getElementById("connectButton").style.display = "none";
@@ -142,6 +149,15 @@
             document.getElementById("disconnectButton").style.display = "none";
             document.getElementById("connectedSection").style.display = "none";
             isConnected = false;
+        }
+
+        function networkChanged(chainID) {
+            const networkStatus = document.getElementById("networkStatus");
+            network = nameOfConnectedNetwork(chainID);
+
+            networkStatus.innerText = "Connected network: " + network;
+            contractAddress = contractAddressBook[network];
+            console.log("Changed network to: " + network + ". CONTRACT ADDRESS " + contractAddress);
         }
 
         function handleFile(fileInput) {
@@ -322,10 +338,12 @@
             }
         }
 
-
         /*Auxiliary functions*/
         function generateEtherscanLink(transactionHash) {
-            const etherscanURL = `https://goerli.etherscan.io/tx/${transactionHash}`;
+            let prefix = "";
+            if (network === "Goerli" )
+                prefix = "goerli.";
+            const etherscanURL = `https://${prefix}etherscan.io/tx/${transactionHash}`;
             const linkHTML = `<a href="${etherscanURL}" target="_blank">View Transaction on Etherscan</a>`;
             return linkHTML;
         }
@@ -347,6 +365,23 @@
             contract = new web3.eth.Contract(contractABI, contractAddress);
             return contract;
         }
+
+        function nameOfConnectedNetwork(chainID) {
+            var name;
+            switch (chainID) {
+                case "0x5":
+                    name = "Goerli";
+                    break;
+                case "0x1":
+                    name = "Mainnet";
+                    break;
+                default:
+                    name = "Unknown";
+                    break;
+            }
+            return name;
+        }
+
     </script>
 </body>
 
