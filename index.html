@@ -264,11 +264,10 @@
                 const account = currentAccount;
                 const contract = await getContract();
 
-                // Listen to the event evento DocumentAdded
+                // Listen to the event DocumentAdded
                 const myEvent = contract.events.DocumentAdded({ filter: { user: account } })
                     .on('data', function (event) {
                         const option = createOptionFromEvent(event);
-                        //TODO This add the element to the dropdown twice
                         dropdown.add(option);
                     })
                     .on('error', function (error) {
@@ -393,5 +392,4 @@
 
     </script>
 </body>
-
 </html>
