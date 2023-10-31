@@ -31,7 +31,9 @@
     <button id="connectButton" onclick="connectWallet()">Connect Wallet</button>
     <button id="disconnectButton" style="display: none;" onclick="disconnectWallet()">Disconnect</button>
 
-    <strong><p id="networkStatus"></p></strong>
+    <strong>
+        <p id="networkStatus"></p>
+    </strong>
     <p id="walletStatus"></p>
     <p id="connectionStatus"></p>
 
@@ -59,12 +61,18 @@
         <div>
             <label for="fileName">File Name:</label>
             <br>
-            <input type="text" id="fileName" name="fileName">
+            <input type="text" id="fileName" name="fileName"></input>
         </div>
         <div>
             <label for="fileDescription">File Description:</label>
             <br>
             <textarea id="fileDescription" name="fileDescription" rows="4" cols="50"></textarea>
+        </div>
+        <div>
+            <label for="donationAmount">Make a donation (optional):</label>
+            <br>
+            <input id="donationAmount" name="donationAmount"></input>
+            <label id="networkCoinSymbol"></label>
         </div>
         <button id="addDocumentButton" onclick="addDocumentToContract()" disabled="true">Add Document</button>
 
@@ -154,12 +162,14 @@
 
         function networkChanged(chainID) {
             const networkStatus = document.getElementById("networkStatus");
+            const networkCoinSymbol = document.getElementById("networkCoinSymbol");
             network = nameOfConnectedNetwork(chainID);
 
             networkStatus.innerText = "Connected network: " + network;
+            networkCoinSymbol.innerText = SymbolOfConnectedNetwork(chainID);
             contractAddress = contractAddressBook[network];
-            
-            if (network === "Unknown"){
+
+            if (network === "Unknown") {
                 document.getElementById("connectedSection").style.display = "none";
                 networkStatus.innerText += ". Please change to a supported network.";
             }
@@ -200,7 +210,7 @@
                 const wordArray = CryptoJS.enc.Utf8.parse(fileData);
                 const hash = CryptoJS.SHA256(wordArray);
                 documentHash = '0x' + hash.toString().substring(0, 64);;
-                hashResult.innerText = `Hash of the file is: ${hash.toString()}`;
+                hashResult.innerText = `Hash of the file: ${hash.toString()}`;
                 fileNameInput.value = file.name;
 
                 // Reset progress bar and enable input
@@ -349,7 +359,7 @@
         /*Auxiliary functions*/
         function generateEtherscanLink(transactionHash) {
             let prefix = "";
-            if (network === "Goerli" )
+            if (network === "Goerli")
                 prefix = "goerli.";
             const etherscanURL = `https://${prefix}etherscan.io/tx/${transactionHash}`;
             const linkHTML = `<a href="${etherscanURL}" target="_blank">View Transaction on Etherscan</a>`;
@@ -375,13 +385,22 @@
         }
 
         function nameOfConnectedNetwork(chainID) {
-            var name;
+            let name;
             switch (chainID) {
                 case "0x5":
                     name = "Goerli";
                     break;
                 case "0x1":
-                    name = "Mainnet";
+                    name = "Ethereum Mainnet";
+                    break;
+                case "0xaa36a7":
+                    symbol = "Ethereum Sepolia";
+                    break;
+                case "0x89":
+                    symbol = "Polygon";
+                    break;
+                case "0x13881":
+                    symbol = "Polygon Mumbai";
                     break;
                 default:
                     name = "Unknown";
@@ -390,6 +409,32 @@
             return name;
         }
 
+        function SymbolOfConnectedNetwork(chainID) {
+            let symbol;
+            switch (chainID) {
+                case "0x5":
+                    symbol = "Goerli ETH";
+                    break;
+                case "0x1":
+                    symbol = "ETH";
+                    break;
+                case "0xaa36a7":
+                    symbol = "Sepolia ETH";
+                    break;
+                case "0x89":
+                    symbol = "MATIC";
+                    break;
+                case "0x13881":
+                    symbol = "Mumbai MATIC";
+                    break;
+                default:
+                    symbol = "Unknown";
+                    break;
+            }
+            return symbol;
+        }
+
     </script>
 </body>
+
 </html>
