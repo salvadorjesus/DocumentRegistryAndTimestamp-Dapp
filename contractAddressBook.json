@@ -1,0 +1,32 @@
+{
+    "0x1": {
+        "networkName": "Ethereum",
+        "currencySymbol": "ETH",
+        "address": "0x1234567890123456789012345678901234567890",
+        "explorerUrl":"https://etherscan.io/tx/"
+    },
+    "0x5": {
+        "networkName": "Goerli",
+        "currencySymbol": "GTH",
+        "address": "0x49bE884E8c7b2513f5c6b9149EF6974A57258a97",
+        "explorerUrl":"https://goerli.etherscan.io/tx/"
+    },
+    "0xaa36a7": {
+        "networkName": "Sepolia",
+        "currencySymbol": "SPL",
+        "address": "0x5F86634F81a8b815Fe48eD71a62D29654dcd0364",
+        "explorerUrl":"https://sepolia.etherscan.io/tx/"
+    },
+    "0x89": {
+        "networkName": "Polygon",
+        "currencySymbol": "MATIC",
+        "address": "0xfedcba9876543210fedcba9876543210fedcba9",
+        "explorerUrl":"https://polygonscan.com/tx"
+    },
+    "0x13881": {
+        "networkName": "Polygon Mumbay",
+        "currencySymbol": "MATIC Mumbay",
+        "address": "0x0123456789abcdef0123456789abcdef0123456",
+        "explorerUrl":"https://mumbai.polygonscan.com/tx"
+    }
+}

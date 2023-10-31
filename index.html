@@ -72,7 +72,8 @@
         <div>
             <label for="donationAmount">Include a donation to support this website (optional):</label>
             <br>
-            <input id="donationAmount" name="donationAmount" type="number" step="0.000000000000000001" min="0" value="0" oninput="validity.valid||(value='');"></input>
+            <input id="donationAmount" name="donationAmount" type="number" step="0.000000000000000001" min="0" value="0"
+                oninput="validity.valid||(value='');"></input>
             <label id="networkCoinSymbol"></label>
         </div>
         <button id="addDocumentButton" onclick="addDocumentToContract()" disabled="true">Add Document</button>
@@ -95,14 +96,13 @@
         //Get contract address and contract ABI from file
         var contractABI;
         var contractAddressBook;
-        var contractAddress;
 
         fetch("contractABI.json")
             .then((response) => response.json())
             .then((data) => {
                 contractABI = data;
             });
-        fetch("contractAddress.json")
+        fetch("contractAddressBook.json")
             .then((response) => response.json())
             .then((data) => {
                 contractAddressBook = data;
@@ -113,6 +113,7 @@
         let isConnected = false;
         let documentHash;
         let currentAccount;
+        let chainID;
         let network;
 
         async function connectWallet() {
@@ -126,7 +127,7 @@
 
                     // Request access to the wallet
                     currentAccount = (await window.ethereum.request({ method: 'eth_requestAccounts' }))[0];
-                    let chainID = await ethereum.request({ method: 'eth_chainId' });
+                    chainID = await ethereum.request({ method: 'eth_chainId' });
                     networkChanged(chainID);
                     // Wallet access granted
                     console.log("Connection to wallet established!");
@@ -161,14 +162,14 @@
             isConnected = false;
         }
 
-        function networkChanged(chainID) {
+        function networkChanged(_chainID) {
             const networkStatus = document.getElementById("networkStatus");
             const networkCoinSymbol = document.getElementById("networkCoinSymbol");
-            network = nameOfConnectedNetwork(chainID);
+            chainID = _chainID;
+            network = getNetworkName(chainID);
 
             networkStatus.innerText = "Connected network: " + network;
-            networkCoinSymbol.innerText = SymbolOfConnectedNetwork(chainID);
-            contractAddress = contractAddressBook[network];
+            networkCoinSymbol.innerText = getNetworkSymbol(chainID);
 
             if (network === "Unknown") {
                 document.getElementById("connectedSection").style.display = "none";
@@ -177,7 +178,7 @@
             else
                 document.getElementById("connectedSection").style.display = "block";
 
-            console.log("Changed network to: " + network + ". CONTRACT ADDRESS " + contractAddress);
+            console.log("Changed network to: " + getNetworkName(chainID) + ". CONTRACT ADDRESS " + getContractAddress(chainID));
         }
 
         function handleFile(fileInput) {
@@ -245,8 +246,7 @@
                 //Ensure the validity of the donation amount
                 //donationAmount = donationAmount.replace(',','.'); //<-Already done by element.value
                 let parsedAmount = parseFloat(donationAmount);
-                if (isNaN(parsedAmount))
-                {
+                if (isNaN(parsedAmount)) {
                     console.log("Failed to parse the donation amount. Using ZERO as donation value.");
                     donationAmount = "0";
                 }
@@ -257,7 +257,7 @@
                 await contract.methods.addDocument(documentHash, documentName, documentDescription).send({ from: account, value: donationAmountInWei })
                     .on('transactionHash', function (hash) {
                         console.log('Transaction Hash: ', hash);
-                        etherscanLink = generateEtherscanLink(hash);
+                        etherscanLink = getBlockExplorerLink(hash);
                         transactionInfo.innerHTML = "Transaction sent. Waiting for confirmation. " + etherscanLink;
                     })
                     .once('confirmation', function (confirmationNumber, receipt) {
@@ -372,14 +372,10 @@
         }
 
         /*Auxiliary functions*/
-        function generateEtherscanLink(transactionHash) {
-            let prefix = "";
-            if (network === "Ethereum Goerli")
-                prefix = "goerli.";
-            else if (network === "Ethereum Sepolia")
-                prefix = "sepolia."
-            const etherscanURL = `https://${prefix}etherscan.io/tx/${transactionHash}`;
-            const linkHTML = `<a href="${etherscanURL}" target="_blank">View Transaction on Etherscan</a>`;
+        function getBlockExplorerLink(transactionHash) {
+            const baseURL = contractAddressBook[chainID].explorerUrl;
+            const blockExplorerURL = baseURL + transactionHash;
+            const linkHTML = `<a href="${blockExplorerURL}" target="_blank">View Transaction on Etherscan</a>`;
             return linkHTML;
         }
 
@@ -391,64 +387,44 @@
                 timestamp: event.returnValues.timestamp
             };
             option.text = event.returnValues.documentName;
-            option.value = JSON.stringify(optionValue); // Convertir a cadena
+            option.value = JSON.stringify(optionValue); // Convert to string
             return option;
         }
 
         async function getContract() {
             let contract;
-            contract = new web3.eth.Contract(contractABI, contractAddress);
+            contract = new web3.eth.Contract(contractABI, getContractAddress(chainID));
             return contract;
         }
 
-        function nameOfConnectedNetwork(chainID) {
-            let name;
-            switch (chainID) {
-                case "0x5":
-                    name = "Ethereum Goerli";
-                    break;
-                case "0x1":
-                    name = "Ethereum Mainnet";
-                    break;
-                case "0xaa36a7":
-                    name = "Ethereum Sepolia";
-                    break;
-                case "0x89":
-                    name = "Polygon";
-                    break;
-                case "0x13881":
-                    name = "Polygon Mumbai";
-                    break;
-                default:
-                    name = "Unknown";
-                    break;
-            }
+        function getContractAddress(chainID) {
+            let address = getAddressBookValue(chainID, "address");
+            if (address === 'Unknown')
+                address = "0x0";
+            return address;
+         }
+
+        function getNetworkName(chainID) {
+            let name = getAddressBookValue(chainID, "networkName");
             return name;
+
         }
 
-        function SymbolOfConnectedNetwork(chainID) {
-            let symbol;
-            switch (chainID) {
-                case "0x5":
-                    symbol = "Goerli ETH";
-                    break;
-                case "0x1":
-                    symbol = "ETH";
-                    break;
-                case "0xaa36a7":
-                    symbol = "Sepolia ETH";
-                    break;
-                case "0x89":
-                    symbol = "MATIC";
-                    break;
-                case "0x13881":
-                    symbol = "Mumbai MATIC";
-                    break;
-                default:
-                    symbol = "Unknown";
-                    break;
-            }
+        function getNetworkSymbol(chainID) {
+            let symbol = getAddressBookValue(chainID, "currencySymbol");
             return symbol;
+        }
+
+        function getAddressBookValue(chainID, value)
+        {
+            let res;
+            const entry = contractAddressBook[chainID];
+            if (entry === undefined)
+                res = "Unknown";
+            else
+                res = entry[value]; //JS black magic
+
+            return res;
         }
 
     </script>
