@@ -72,7 +72,7 @@
         <div>
             <label for="donationAmount">Include a donation to support this website (optional):</label>
             <br>
-            <input id="donationAmount" name="donationAmount" type="number" step="0.000000000000000001" min="0" oninput="validity.valid||(value='');"></input>
+            <input id="donationAmount" name="donationAmount" type="number" step="0.000000000000000001" min="0" value="0" oninput="validity.valid||(value='');"></input>
             <label id="networkCoinSymbol"></label>
         </div>
         <button id="addDocumentButton" onclick="addDocumentToContract()" disabled="true">Add Document</button>
@@ -247,8 +247,8 @@
                 let parsedAmount = parseFloat(donationAmount);
                 if (isNaN(parsedAmount))
                 {
-                    console.error("Failed to parse the donation amount. Using ZERO as donation value.");
-                    donationAmount = 0;
+                    console.log("Failed to parse the donation amount. Using ZERO as donation value.");
+                    donationAmount = "0";
                 }
 
                 //Convert to WEI or equivalent to call the contract function
@@ -374,8 +374,10 @@
         /*Auxiliary functions*/
         function generateEtherscanLink(transactionHash) {
             let prefix = "";
-            if (network === "Goerli")
+            if (network === "Ethereum Goerli")
                 prefix = "goerli.";
+            else if (network === "Ethereum Sepolia")
+                prefix = "sepolia."
             const etherscanURL = `https://${prefix}etherscan.io/tx/${transactionHash}`;
             const linkHTML = `<a href="${etherscanURL}" target="_blank">View Transaction on Etherscan</a>`;
             return linkHTML;
@@ -403,19 +405,19 @@
             let name;
             switch (chainID) {
                 case "0x5":
-                    name = "Goerli";
+                    name = "Ethereum Goerli";
                     break;
                 case "0x1":
                     name = "Ethereum Mainnet";
                     break;
                 case "0xaa36a7":
-                    symbol = "Ethereum Sepolia";
+                    name = "Ethereum Sepolia";
                     break;
                 case "0x89":
-                    symbol = "Polygon";
+                    name = "Polygon";
                     break;
                 case "0x13881":
-                    symbol = "Polygon Mumbai";
+                    name = "Polygon Mumbai";
                     break;
                 default:
                     name = "Unknown";

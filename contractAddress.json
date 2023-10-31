@@ -1,5 +1,6 @@
 
 {
-    "Goerli": "0x7B510f3e4C58dCA7be2508f3Cfe0B9162CEf64F8",
-    "Mainnet": "0x7B510f3e4C58dCA7be2508f3Cfe0B9162CEf64F8"
+    "Ethereum Goerli": "0x49bE884E8c7b2513f5c6b9149EF6974A57258a97",
+    "Ethereum Mainnet": "0x7B510f3e4C58dCA7be2508f3Cfe0B9162CEf64F8",
+    "Ethereum Sepolia": "0x5F86634F81a8b815Fe48eD71a62D29654dcd0364"
 }
