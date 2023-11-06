@@ -20,7 +20,7 @@
     "0x89": {
         "networkName": "Polygon",
         "currencySymbol": "MATIC",
-        "address": "0xfedcba9876543210fedcba9876543210fedcba9",
+        "address": "0x585d2A8688e4e84A283d7f02B5625c82F5caCB09",
         "explorerUrl":"https://polygonscan.com/tx/"
     },
     "0x13881": {
