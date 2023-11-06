@@ -21,12 +21,12 @@
         "networkName": "Polygon",
         "currencySymbol": "MATIC",
         "address": "0xfedcba9876543210fedcba9876543210fedcba9",
-        "explorerUrl":"https://polygonscan.com/tx"
+        "explorerUrl":"https://polygonscan.com/tx/"
     },
     "0x13881": {
         "networkName": "Polygon Mumbay",
         "currencySymbol": "MATIC Mumbay",
-        "address": "0x0123456789abcdef0123456789abcdef0123456",
-        "explorerUrl":"https://mumbai.polygonscan.com/tx"
+        "address": "0x5F86634F81a8b815Fe48eD71a62D29654dcd0364",
+        "explorerUrl":"https://mumbai.polygonscan.com/tx/"
     }
 }
