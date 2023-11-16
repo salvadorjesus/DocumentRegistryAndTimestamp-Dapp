@@ -325,11 +325,14 @@
                 const searchResult = document.getElementById('searchResult');
                 let contract = await getContract();
 
-                const documentEvents = await contract.getPastEvents('DocumentAdded', {
-                    filter: { hash: documentHash },
-                    fromBlock: 0,
-                    toBlock: 'latest'
-                });
+                // const documentEvents = await contract.getPastEvents('DocumentAdded', {
+                //     filter: { hash: documentHash },
+                //     fromBlock: 0,
+                //     toBlock: 'latest'
+                // });
+
+                //Lets try multiple events:
+                const documentEvents = await getPastEvents('DocumentAdded', 0,1000);
 
                 if (documentEvents.length === 0) {
                     searchResult.innerText = "This document is not on the blockchain.";
@@ -402,7 +405,7 @@
             if (address === 'Unknown')
                 address = "0x0";
             return address;
-         }
+        }
 
         function getNetworkName(chainID) {
             let name = getAddressBookValue(chainID, "networkName");
@@ -415,8 +418,7 @@
             return symbol;
         }
 
-        function getAddressBookValue(chainID, value)
-        {
+        function getAddressBookValue(chainID, value) {
             let res;
             const entry = contractAddressBook[chainID];
             if (entry === undefined)
@@ -425,6 +427,83 @@
                 res = entry[value]; //JS black magic
 
             return res;
+        }
+
+        //From https://github.com/bnb-chain/bsc/issues/113
+        async function getPastEvents(
+            // chainId,
+            // provider,
+            // contractAddress,
+            // contractAbi,
+            event,
+            fromBlock,
+            chunkLimit = 500,
+            toBlock = "latest"            
+        ) {
+            try {
+            //     if (!provider && !!chainId) {
+            //         provider = getProviderForChainId(chainId)
+            //     } else if (!provider) {
+            //         return { events: [], errors: ["Assign chainId or provider"], lastBlock: null }
+            //     }
+
+                //const contract = new provider.eth.Contract(contractAbi, contractAddress)
+                const contract = await getContract();
+
+                const fromBlockNumber = +fromBlock
+                const toBlockNumber =
+                    toBlock === "latest" ? +(await window.web3.eth.getBlockNumber()) : +toBlock
+                const totalBlocks = toBlockNumber - fromBlockNumber
+                const chunks = []
+
+                if (chunkLimit > 0 && totalBlocks > chunkLimit) {
+                    const count = Math.ceil(totalBlocks / chunkLimit)
+                    let startingBlock = fromBlockNumber
+
+                    for (let index = 0; index < count; index++) {
+                        const fromRangeBlock = startingBlock
+                        const toRangeBlock =
+                            index === count - 1 ? toBlockNumber : startingBlock + chunkLimit
+                        startingBlock = toRangeBlock + 1
+
+                        chunks.push({ fromBlock: fromRangeBlock, toBlock: toRangeBlock })
+                    }
+                } else {
+                    chunks.push({ fromBlock: fromBlockNumber, toBlock: toBlockNumber })
+                }
+
+                const events = []
+                const errors = []
+                for (const chunk of chunks) {
+
+                // const documentEvents = await contract.getPastEvents('DocumentAdded', {
+                //     filter: { hash: documentHash },
+                //     fromBlock: chunk.fromBlock,
+                //     toBlock: chunk.toBlock
+                // });
+
+
+                    await contract.getPastEvents(
+                        event,
+                        {
+                            filter: { hash: documentHash },
+                            fromBlock: chunk.fromBlock,
+                            toBlock: chunk.toBlock
+                        },
+                        async function (error, chunkEvents) {
+                            if (chunkEvents?.length > 0) {
+                                events.push(...chunkEvents)
+                            }
+
+                            if (error) errors.push(error)
+                        }
+                    )
+                }
+
+                return { events, errors, lastBlock: toBlockNumber }
+            } catch (error) {
+                return { events: [], errors: [error], lastBlock: null }
+            }
         }
 
     </script>
