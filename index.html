@@ -127,12 +127,11 @@
 
                     // Request access to the wallet
                     currentAccount = (await window.ethereum.request({ method: 'eth_requestAccounts' }))[0];
-                    chainID = await ethereum.request({ method: 'eth_chainId' });
-                    networkChanged(chainID);
+                    networkChanged(await ethereum.request({ method: 'eth_chainId' }));
                     // Wallet access granted
                     console.log("Connection to wallet established!");
-                    ethereum.on('chainChanged', (chainId) => {
-                        networkChanged(chainId);
+                    ethereum.on('chainChanged', (newChainID) => {
+                        networkChanged(newChainID);
                     });
 
                     // Update UI
@@ -163,6 +162,9 @@
         }
 
         function networkChanged(_chainID) {
+            if (chainID == _chainID)
+                return;
+
             const networkStatus = document.getElementById("networkStatus");
             const networkCoinSymbol = document.getElementById("networkCoinSymbol");
             chainID = _chainID;
@@ -175,7 +177,7 @@
                 document.getElementById("connectedSection").style.display = "none";
                 networkStatus.innerText += ". Please change to a supported network.";
             }
-            else
+            else if (isConnected)
                 document.getElementById("connectedSection").style.display = "block";
 
             console.log("Changed network to: " + getNetworkName(chainID) + ". CONTRACT ADDRESS " + getContractAddress(chainID));
