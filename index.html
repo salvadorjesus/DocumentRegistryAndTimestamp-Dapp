@@ -32,13 +32,15 @@
     <button id="connectButton" onclick="connectWallet()">Connect Wallet</button>
     <button id="disconnectButton" style="display: none;" onclick="disconnectWallet()">Disconnect</button>
 
-    <strong>
-        <p id="networkStatus"></p>
-    </strong>
+
     <p id="walletStatus"></p>
     <p id="connectionStatus"></p>
 
+    <!--Connected section-->
     <div id="connectedSection" style="display: none;">
+        <strong>
+            <p id="networkStatus"></p>
+        </strong>
         <h2>Document selection</h2>
         <p>Select a document to add or search on the registy.</p>
         </p>
@@ -158,6 +160,7 @@
             document.getElementById("connectButton").style.display = "inline";
             document.getElementById("disconnectButton").style.display = "none";
             document.getElementById("connectedSection").style.display = "none";
+            ethereum.removeAllListeners();
             isConnected = false;
         }
 
@@ -165,6 +168,7 @@
             if (chainID == _chainID)
                 return;
 
+            //Network related UI and 
             const networkStatus = document.getElementById("networkStatus");
             const networkCoinSymbol = document.getElementById("networkCoinSymbol");
             chainID = _chainID;
@@ -173,6 +177,7 @@
             networkStatus.innerText = "Connected network: " + network;
             networkCoinSymbol.innerText = getNetworkSymbol(chainID);
 
+            //Connected block management
             if (network === "Unknown") {
                 document.getElementById("connectedSection").style.display = "none";
                 networkStatus.innerText += ". Please change to a supported network.";
