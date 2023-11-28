@@ -168,7 +168,7 @@
             if (chainID == _chainID)
                 return;
 
-            //Network related UI and 
+            //Network related UI and variables
             const networkStatus = document.getElementById("networkStatus");
             const networkCoinSymbol = document.getElementById("networkCoinSymbol");
             chainID = _chainID;
@@ -184,6 +184,9 @@
             }
             else if (isConnected)
                 document.getElementById("connectedSection").style.display = "block";
+
+            //Restart labels displaying blockchain info of user files and selected file. 
+            resetDocumentInfo();
 
             console.log("Changed network to: " + getNetworkName(chainID) + ". CONTRACT ADDRESS " + getContractAddress(chainID));
         }
@@ -250,15 +253,15 @@
                 // web3.eth.handleRevert = true;
 
 
-                //Ensure the validity of the donation amount
-                //donationAmount = donationAmount.replace(',','.'); //<-Already done by element.value
+                //Ensure the validity of the donation amount.
+                //donationAmount = donationAmount.replace(',','.'); //<-Already done by element.value on declaration.
                 let parsedAmount = parseFloat(donationAmount);
                 if (isNaN(parsedAmount)) {
                     console.log("Failed to parse the donation amount. Using ZERO as donation value.");
                     donationAmount = "0";
                 }
 
-                //Convert to WEI or equivalent to call the contract function
+                //Convert to WEI or equivalent to call the contract function.
                 donationAmountInWei = ethers.utils.parseEther(donationAmount);
 
                 await contract.methods.addDocument(documentHash, documentName, documentDescription).send({ from: account, value: donationAmountInWei })
@@ -376,6 +379,16 @@
                 selectedFileDescription.innerText = "";
                 selectedFileTimestamp.innerText = "";
             }
+        }
+
+        function resetDocumentInfo() {
+            //Reset selected document blockchain info
+            document.getElementById('searchResult').innerText = "";
+            //Reset all my documents on the blockchain info
+            document.getElementById('fileDropdown').options.length = 0;
+            document.getElementById('selectedFileHash').innerText = "";
+            document.getElementById('selectedFileDescription').innerText = "";
+            document.getElementById('selectedFileTimestamp').innerText = "";
         }
 
         /*Auxiliary functions*/
