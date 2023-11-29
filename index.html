@@ -6,6 +6,12 @@
     <script src="https://cdn.jsdelivr.net/npm/web3@1.6.1/dist/web3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
     <script src="https://cdn.ethers.io/lib/ethers-5.4.umd.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap">
+    <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 
 <body>
@@ -28,7 +34,7 @@
         fingerprint that is generated from the contents of a file. This kind of signature is used in many other
         applications, such as verifying the authenticity of software downloads, ensuring data integrity in
         databases, and securing online transactions</p>
-    <h2>Compatible networks</h2>
+    <h3>Compatible networks</h3>
     <p>Follow the link to read the verified contract on a block explorer.</p>
     <ul>
         <li>
@@ -46,7 +52,7 @@
                 target="_blank">Polygon Mumbai</a>.
         </li>
     </ul>
-    <h2>Source</h2>
+    <h3>Source</h3>
     <p>This is an open-source project. You can find the code on its
         <a href="https://github.com/salvadorjesus/DocumentRegistryAndTimestamp-Dapp" target="_blank">Github
             repository</a>.
@@ -58,13 +64,13 @@
     <strong>
         <p id="networkStatus"></p>
     </strong>
-    <p id="walletStatus"></p>
-    <p id="connectionStatus"></p>
+    <p class="notification" id="walletStatus"></p>
+    <p class="notification" id="connectionStatus"></p>
 
     <!--Connected section-->
     <div id="connectedSection" style="display: none;">
-
-        <h2>Document selection</h2>
+        <!---->
+        <h3>Document selection</h3>
         <p>Select a document to add or search on the registy.</p>
         </p>
         <label for="fileInput">Upload File:</label>
@@ -73,17 +79,20 @@
             <progress id="fileProgress" value="0" max="100"></progress>
             <p id="progressStatus">Loading...</p>
         </div>
-        <p id="hashResult"></p>
+        <p class="notification" id="hashResult"></p>
 
-        <h2>Search for a document on the registry</h2>
+        <!---->
+        <h3>Search for a document on the registry</h3>
         <p>Look up for the selected document on the blockchain</p>
         <button id="searchDocumentButton" onclick="searchForDocumentOnTheBlockchain()" disabled="true">Search
             document</button>
-        <p id="searchResult"></p>
-        <p id="searchDocumentErrorMessage"></p>
-        <h2>Register a document on the registry</h2>
+        <p class="file-info-container" id="searchResult"></p>
+        <p class="notification" id="searchDocumentErrorMessage"></p>
+
+        <!---->
+        <h3>Register a document on the registry</h3>
         <p>Upload the selected document to the blockchain with a name and a description.</p>
-        <p><strong>Note:</strong>A larger description will have an impact on the transaction costs. You cannot register
+        <p><strong>Note:</strong> A larger description will have an impact on the transaction costs. You cannot register
             the same document twice with the same address.</p>
         <div>
             <label for="fileName">File Name:</label>
@@ -103,19 +112,19 @@
             <label id="networkCoinSymbol"></label>
         </div>
         <button id="addDocumentButton" onclick="addDocumentToContract()" disabled="true">Add Document</button>
+        <p class="notification" id="transactionInfo"></p>
 
-        <p id="transactionInfo"></p>
-
-        <h2>Your registered documents</h2>
+        <!---->
+        <h3>Your registered documents</h3>
         <p>Documents registered for the connected user.</p>
         <select id="fileDropdown" onchange="displayFileDetails()"></select>
-
-        <p id="selectedFileHash"></p>
-        <p id="selectedFileDescription"></p>
-        <p id="selectedFileTimestamp"></p>
-
+        <div class="file-info-container">
+            <p id="selectedFileHash"></p>
+            <p id="selectedFileDescription"></p>
+            <p id="selectedFileTimestamp"></p>
+        </div>
         <button onclick="getUserFilesOnTheBlockchain()">Get your documents</button>
-        <p id="registeredDocumentsErrorMessage"></p>
+        <p class="notification" id="registeredDocumentsErrorMessage"></p>
     </div>
 
     <!-- SCRIPT SECTION -->

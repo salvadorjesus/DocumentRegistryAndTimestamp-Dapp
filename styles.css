@@ -1,0 +1,87 @@
+/* Establecer box-sizing para todos los elementos */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+:root {
+    --main-background-color: #5c7f9d;
+    --text-color: #fff;
+    --border-color: #fff;
+    --shadow-color: rgba(216, 255, 255, 0.8);
+    --connected-background-color: #203040;
+}
+
+/* Colores */
+body {
+    background-color: var(--main-background-color);
+    color: var(--text-color);
+}
+
+/* Para títulos */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Lora', serif;
+    /* font-family: 'Roboto', sans-serif; */
+    /* font-family: 'Montserrat', sans-serif; */
+    /* font-family: 'Noto Serif', serif; */
+    
+}
+
+/* Para texto */
+body {
+    font-family: 'Montserrat', sans-serif;
+    /* font-family: 'Noto Serif', serif; */
+    /* font-family: 'Roboto', sans-serif; */
+    /* font-family: 'Lora', serif; */
+}
+
+/* Bordes y Espacios */
+button,
+input,
+select {
+    border: 2px solid solid var(--border-color);
+    border-radius: 4px;
+    margin: 5px;
+    padding: 8px;
+}
+
+button:hover {
+    box-shadow: 0 0 10px var(--shadow-color);
+}
+
+img {
+    filter: grayscale(50%);
+}
+
+#connectedSection {
+    background-color: var(--connected-background-color);
+    border-radius: 10px; 
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.file-info-container {
+    background-color: #CAC6C6; /* Color de fondo diferente */
+    border-radius: 8px; /* Bordes redondeados */
+    font-family: 'Courier New', monospace; /* Letra que recuerde a consola */
+    color: #1a1a1a; /* Color del texto */
+    padding: 10px;
+    margin-bottom: 20px;
+    min-height: 4.8em;
+}
+
+.notification {
+    font-family: 'Courier New', monospace; /* Letra que recuerde a consola */
+    color: #ffe083; /* Color del texto */
+    font-size: 1.025em;
+}
+
+.file-info-container > p {
+    margin: 0;
+}
