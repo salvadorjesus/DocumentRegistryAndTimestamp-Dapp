@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "github.com/salvadorjesus/Donable-Solidity/blob/master/Donable.sol";
+
 /**
  * @title DocumentRegistry
  * @dev A contract to store and manage records of documents with associated timestamps.
  */
-contract DocumentRegistry {
+contract DocumentRegistry is Donable {
 
     /**
      * @dev Structure representing a document with its hash, name, description, user's address, and timestamp.
@@ -40,10 +42,10 @@ contract DocumentRegistry {
      * @param _documentName The name of the document.
      * @param _description The description of the document.
      */
-    function addDocument(bytes32 _hash, string memory _documentName, string memory _description) public {
+    function addDocument(bytes32 _hash, string memory _documentName, string memory _description) public payable {
         bytes32 key = keccak256(abi.encodePacked(msg.sender, _hash));
         require(documents[key].userAddress != msg.sender, "Document already exists for this user");
-        
+
         Document memory newDocument = Document({
             hash: _hash,
             documentName: _documentName,
@@ -53,7 +55,8 @@ contract DocumentRegistry {
         });
 
         documents[key] = newDocument;
-
+        //Consider the msg.value a donation to the contract
+        donateAmount(msg.value);
         emit DocumentAdded(msg.sender, newDocument.hash, newDocument.documentName, newDocument.description, newDocument.timestamp);
     }
 

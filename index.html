@@ -5,19 +5,68 @@
     <title>Web3 Document Registry</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.6.1/dist/web3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.4.umd.min.js"></script>
 </head>
 
 <body>
     <h1>Web3 Document Registry and Timestamp</h1>
+    <!-- <img src="./img/site_illustration.jpg"></img> -->
+    <h2>Register and verify documents on the blockchain.</h2>
+    <ul>
+        <li><strong>Register documents on the blockchain</strong>: Upload a file and provide a name and description to
+            register your document on the blockchain. This will give you proof of existence and authenticity of your
+            document.</li>
+        <li><strong>Search for documents on the blockchain</strong>: Upload a file to see if it is registered on the
+            blockchain and by who. This will allow you to verify the validity and origin of a document.</li>
+        <li><strong>View your registered documents</strong>: You can see a list of the documents you have registered on
+            the blockchain with your connected address.</li>
+    </ul>
+    <p>This site can be <strong>useful for legal purposes</strong>, such as proving existence or ownership of a document
+        at a given time.</p>
+    <p>Please note that, when you upload a document, it does not leave your computer. A SHA256 signature of the
+        file is computed locally and used for the document registry. A SHA256 signature is a unique digital
+        fingerprint that is generated from the contents of a file. This kind of signature is used in many other
+        applications, such as verifying the authenticity of software downloads, ensuring data integrity in
+        databases, and securing online transactions</p>
+    <h2>Compatible networks</h2>
+    <p>Follow the link to read the verified contract on a block explorer.</p>
+    <ul>
+        <li>
+            <strong>Ethereum</strong> (not deployed yet),
+            <a href="https://goerli.etherscan.io/address/0x49be884e8c7b2513f5c6b9149ef6974a57258a97"
+                target="_blank">Goerli</a>,
+            <a href="https://sepolia.etherscan.io/address/0x5F86634F81a8b815Fe48eD71a62D29654dcd0364#code"
+                target="_blank">Sepolia</a>.
+        </li>
+        <li>
+            <strong><a href="https://polygonscan.com/address/0x585d2a8688e4e84a283d7f02b5625c82f5cacb09"
+                    target="_blank">Polygon</a>
+            </strong>,
+            <a href="https://mumbai.polygonscan.com/address/0x5f86634f81a8b815fe48ed71a62d29654dcd0364"
+                target="_blank">Polygon Mumbai</a>.
+        </li>
+    </ul>
+    <h2>Source</h2>
+    <p>This is an open-source project. You can find the code on its
+        <a href="https://github.com/salvadorjesus/DocumentRegistryAndTimestamp-Dapp" target="_blank">Github
+            repository</a>.
+    </p>
 
     <button id="connectButton" onclick="connectWallet()">Connect Wallet</button>
     <button id="disconnectButton" style="display: none;" onclick="disconnectWallet()">Disconnect</button>
 
+    <strong>
+        <p id="networkStatus"></p>
+    </strong>
     <p id="walletStatus"></p>
     <p id="connectionStatus"></p>
 
+    <!--Connected section-->
     <div id="connectedSection" style="display: none;">
+
         <h2>Document selection</h2>
+        <p>Select a document to add or search on the registy.</p>
+        </p>
         <label for="fileInput">Upload File:</label>
         <input type="file" id="fileInput" onchange="handleFile(this)" />
         <div id="progressBar" style="display: none;">
@@ -25,25 +74,37 @@
             <p id="progressStatus">Loading...</p>
         </div>
         <p id="hashResult"></p>
-        <h2>Register document on the blockchain</h2>
+
+        <h2>Search for a document on the registry</h2>
+        <p>Look up for the selected document on the blockchain</p>
+        <button id="searchDocumentButton" onclick="searchForDocumentOnTheBlockchain()" disabled="true">Search
+            document</button>
+        <p id="searchResult"></p>
+        <p id="searchDocumentErrorMessage"></p>
+        <h2>Register a document on the registry</h2>
+        <p>Upload the selected document to the blockchain with a name and a description.</p>
+        <p><strong>Note:</strong>A larger description will have an impact on the transaction costs. You cannot register
+            the same document twice with the same address.</p>
         <div>
             <label for="fileName">File Name:</label>
             <br>
-            <input type="text" id="fileName" name="fileName">
+            <input type="text" id="fileName" name="fileName"></input>
         </div>
         <div>
             <label for="fileDescription">File Description:</label>
             <br>
             <textarea id="fileDescription" name="fileDescription" rows="4" cols="50"></textarea>
         </div>
+        <div>
+            <label for="donationAmount">Include a donation to support this website (optional):</label>
+            <br>
+            <input id="donationAmount" name="donationAmount" type="number" step="0.000000000000000001" min="0" value="0"
+                oninput="validity.valid||(value='');"></input>
+            <label id="networkCoinSymbol"></label>
+        </div>
         <button id="addDocumentButton" onclick="addDocumentToContract()" disabled="true">Add Document</button>
 
         <p id="transactionInfo"></p>
-
-        <h2>Search for document on the blockchain</h2>
-        <button id="searchDocumentButton" onclick="searchForDocumentOnTheBlockchain()" disabled="true">Search
-            document</button>
-        <p id="searchResult"></p>
 
         <h2>Your registered documents</h2>
         <p>Documents registered for the connected user.</p>
@@ -53,29 +114,34 @@
         <p id="selectedFileDescription"></p>
         <p id="selectedFileTimestamp"></p>
 
-        <button onclick="getEventsAndRefresh()">Get your documents</button>
+        <button onclick="getUserFilesOnTheBlockchain()">Get your documents</button>
+        <p id="registeredDocumentsErrorMessage"></p>
     </div>
 
-
+    <!-- SCRIPT SECTION -->
     <script>
+        //Get contract address and contract ABI from file
         var contractABI;
-        var contractAddress;
+        var contractAddressBook;
 
         fetch("contractABI.json")
             .then((response) => response.json())
             .then((data) => {
                 contractABI = data;
             });
-        fetch("contractAddress.txt")
-            .then((response) => response.text())
-            .then((text) => {
-                contractAddress = text;
-                console.log("CONTRACT ADDRESS " + contractAddress);
+        fetch("contractAddressBook.json")
+            .then((response) => response.json())
+            .then((data) => {
+                contractAddressBook = data;
             });
 
+        //Variables    
         var emitedContractEvents;
         let isConnected = false;
         let documentHash;
+        let currentAccount;
+        let chainID;
+        let network;
 
         async function connectWallet() {
             // Check if there is an instance of web3 already present
@@ -87,14 +153,20 @@
                     connectionStatus.innerText = "";
 
                     // Request access to the wallet
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    currentAccount = (await window.ethereum.request({ method: 'eth_requestAccounts' }))[0];
+                    networkChanged(await ethereum.request({ method: 'eth_chainId' }));
                     // Wallet access granted
                     console.log("Connection to wallet established!");
+                    ethereum.on('chainChanged', (newChainID) => {
+                        networkChanged(newChainID);
+                    });
 
                     // Update UI
                     document.getElementById("connectButton").style.display = "none";
                     document.getElementById("disconnectButton").style.display = "inline";
-                    document.getElementById("connectedSection").style.display = "block";
+                    document.getElementById("networkStatus").style.display = "block";
+                    if (network != "Unknown")
+                        document.getElementById("connectedSection").style.display = "block";
                     isConnected = true;
                 } catch (error) {
                     // User denied wallet access
@@ -114,7 +186,36 @@
             document.getElementById("connectButton").style.display = "inline";
             document.getElementById("disconnectButton").style.display = "none";
             document.getElementById("connectedSection").style.display = "none";
+            document.getElementById("networkStatus").style.display = "none";
+            ethereum.removeAllListeners();
             isConnected = false;
+        }
+
+        function networkChanged(_chainID) {
+            if (chainID == _chainID)
+                return;
+
+            //Network related UI and variables
+            const networkStatus = document.getElementById("networkStatus");
+            const networkCoinSymbol = document.getElementById("networkCoinSymbol");
+            chainID = _chainID;
+            network = getNetworkName(chainID);
+
+            networkStatus.innerText = "Connected network: " + network;
+            networkCoinSymbol.innerText = getNetworkSymbol(chainID);
+
+            //Connected block management
+            if (network === "Unknown") {
+                document.getElementById("connectedSection").style.display = "none";
+                networkStatus.innerText += ". Please change to a supported network.";
+            }
+            else if (isConnected)
+                document.getElementById("connectedSection").style.display = "block";
+
+            //Restart labels displaying blockchain info of user files and selected file. 
+            resetDocumentInfo();
+
+            console.log("Changed network to: " + getNetworkName(chainID) + ". CONTRACT ADDRESS " + getContractAddress(chainID));
         }
 
         function handleFile(fileInput) {
@@ -148,7 +249,7 @@
                 const wordArray = CryptoJS.enc.Utf8.parse(fileData);
                 const hash = CryptoJS.SHA256(wordArray);
                 documentHash = '0x' + hash.toString().substring(0, 64);;
-                hashResult.innerText = `Hash of the file is: ${hash.toString()}`;
+                hashResult.innerText = `Hash of the file: ${hash.toString()}`;
                 fileNameInput.value = file.name;
 
                 // Reset progress bar and enable input
@@ -168,20 +269,32 @@
                 const transactionInfo = document.getElementById('transactionInfo');
                 const documentName = document.getElementById('fileName').value;
                 const documentDescription = document.getElementById('fileDescription').value;
+                let donationAmount = document.getElementById("donationAmount").value;
+                let donationAmountInWei;
                 let etherscanLink;
 
                 addDocumentButton.disabled = true;
 
-                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                const account = accounts[0];
-
-                const contract = new web3.eth.Contract(contractABI, contractAddress);
+                const account = currentAccount;
+                const contract = await getContract();
                 // web3.eth.handleRevert = true;
 
-                await contract.methods.addDocument(documentHash, documentName, documentDescription).send({ from: account })
+
+                //Ensure the validity of the donation amount.
+                //donationAmount = donationAmount.replace(',','.'); //<-Already done by element.value on declaration.
+                let parsedAmount = parseFloat(donationAmount);
+                if (isNaN(parsedAmount)) {
+                    console.log("Failed to parse the donation amount. Using ZERO as donation value.");
+                    donationAmount = "0";
+                }
+
+                //Convert to WEI or equivalent to call the contract function.
+                donationAmountInWei = ethers.utils.parseEther(donationAmount);
+
+                await contract.methods.addDocument(documentHash, documentName, documentDescription).send({ from: account, value: donationAmountInWei })
                     .on('transactionHash', function (hash) {
                         console.log('Transaction Hash: ', hash);
-                        etherscanLink = generateEtherscanLink(hash);
+                        etherscanLink = getBlockExplorerLink(hash);
                         transactionInfo.innerHTML = "Transaction sent. Waiting for confirmation. " + etherscanLink;
                     })
                     .once('confirmation', function (confirmationNumber, receipt) {
@@ -206,26 +319,26 @@
         }
 
         /*Registered documents management*/
-        async function getEventsAndRefresh() {
+        async function getUserFilesOnTheBlockchain() {
+            const dropdown = document.getElementById("fileDropdown");
+            const errorMessageElement = document.getElementById("registeredDocumentsErrorMessage");
+            errorMessageElement.innerText = "";
+
+            const account = currentAccount;
+            const contract = await getContract();
+
             try {
-                const dropdown = document.getElementById("fileDropdown");
-
-                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                const account = accounts[0];
-                const contract = new web3.eth.Contract(contractABI, contractAddress);
-
-                // Escucha el evento DocumentAdded
+                // Listen to the event DocumentAdded
                 const myEvent = contract.events.DocumentAdded({ filter: { user: account } })
                     .on('data', function (event) {
                         const option = createOptionFromEvent(event);
                         dropdown.add(option);
-                        //TODO verify that it works
                     })
                     .on('error', function (error) {
-                        console.error('Error getting contract events:', error);
+                        console.error('Error receiving a DocumentAdded event:', error);
                     });
 
-                // Acceder a los eventos anteriores
+                // Access previous events
                 emitedContractEvents = await contract.getPastEvents('DocumentAdded', {
                     filter: { user: account },
                     fromBlock: 0,
@@ -242,17 +355,17 @@
                 displayFileDetails();
 
             } catch (error) {
-                console.error('Error getting contract events to update the registry:', error);
+                managePastEventError(error, errorMessageElement);
             }
         }
 
         async function searchForDocumentOnTheBlockchain() {
-            try {
-                const searchResult = document.getElementById('searchResult');
-                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                const account = accounts[0];
-                const contract = new web3.eth.Contract(contractABI, contractAddress);
+            const searchResult = document.getElementById('searchResult');
+            const errorMessageElement = document.getElementById("searchDocumentErrorMessage");
+            errorMessageElement.innerText = "";
+            let contract = await getContract();
 
+            try {
                 const documentEvents = await contract.getPastEvents('DocumentAdded', {
                     filter: { hash: documentHash },
                     fromBlock: 0,
@@ -273,7 +386,7 @@
                     });
                 }
             } catch (error) {
-                console.error('Error searching for document on the blockchain:', error);
+                managePastEventError(error, errorMessageElement);
             }
         }
 
@@ -299,11 +412,32 @@
             }
         }
 
+        function resetDocumentInfo() {
+            //Reset selected document blockchain info
+            document.getElementById('searchResult').innerText = "";
+            //Reset all my documents on the blockchain info
+            document.getElementById('fileDropdown').options.length = 0;
+            document.getElementById('selectedFileHash').innerText = "";
+            document.getElementById('selectedFileDescription').innerText = "";
+            document.getElementById('selectedFileTimestamp').innerText = "";
+            document.getElementById("searchDocumentErrorMessage").innerText = "";
+            document.getElementById("registeredDocumentsErrorMessage").innerText = "";
+        }
 
         /*Auxiliary functions*/
-        function generateEtherscanLink(transactionHash) {
-            const etherscanURL = `https://goerli.etherscan.io/tx/${transactionHash}`;
-            const linkHTML = `<a href="${etherscanURL}" target="_blank">View Transaction on Etherscan</a>`;
+        function managePastEventError(error, infoElement) {
+            if (error.message.toLowerCase().includes("range")) {
+                console.log("Block range related error:", error);
+                infoElement.innerText = "Error getting file info: Incompatible RPC. Please configure your wallet to connect to an RPC that can serve past events without range limit (i.e.: Alchemy.com).";
+            }
+            else
+                console.error('Error getting contract events to update the registry:', error);
+        }
+
+        function getBlockExplorerLink(transactionHash) {
+            const baseURL = contractAddressBook[chainID].explorerUrl;
+            const blockExplorerURL = baseURL + transactionHash;
+            const linkHTML = `<a href="${blockExplorerURL}" target="_blank">View Transaction on Etherscan</a>`;
             return linkHTML;
         }
 
@@ -315,10 +449,46 @@
                 timestamp: event.returnValues.timestamp
             };
             option.text = event.returnValues.documentName;
-            option.value = JSON.stringify(optionValue); // Convertir a cadena
+            option.value = JSON.stringify(optionValue); // Convert to string
             return option;
+        }
+
+        async function getContract() {
+            let contract;
+            contract = new web3.eth.Contract(contractABI, getContractAddress(chainID));
+            return contract;
+        }
+
+        function getContractAddress(chainID) {
+            let address = getAddressBookValue(chainID, "address");
+            if (address === 'Unknown')
+                address = "0x0";
+            return address;
+        }
+
+        function getNetworkName(chainID) {
+            let name = getAddressBookValue(chainID, "networkName");
+            return name;
+
+        }
+
+        function getNetworkSymbol(chainID) {
+            let symbol = getAddressBookValue(chainID, "currencySymbol");
+            return symbol;
+        }
+
+        function getAddressBookValue(chainID, value) {
+            let res;
+            const entry = contractAddressBook[chainID];
+            if (entry === undefined)
+                res = "Unknown";
+            else
+                res = entry[value]; //JS black magic
+
+            return res;
         }
 
     </script>
 </body>
+
 </html>
