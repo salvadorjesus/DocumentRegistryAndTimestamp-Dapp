@@ -55,15 +55,15 @@
     <button id="connectButton" onclick="connectWallet()">Connect Wallet</button>
     <button id="disconnectButton" style="display: none;" onclick="disconnectWallet()">Disconnect</button>
 
-
+    <strong>
+        <p id="networkStatus"></p>
+    </strong>
     <p id="walletStatus"></p>
     <p id="connectionStatus"></p>
 
     <!--Connected section-->
     <div id="connectedSection" style="display: none;">
-        <strong>
-            <p id="networkStatus"></p>
-        </strong>
+
         <h2>Document selection</h2>
         <p>Select a document to add or search on the registy.</p>
         </p>
@@ -118,7 +118,7 @@
         <p id="registeredDocumentsErrorMessage"></p>
     </div>
 
-
+    <!-- SCRIPT SECTION -->
     <script>
         //Get contract address and contract ABI from file
         var contractABI;
@@ -164,6 +164,7 @@
                     // Update UI
                     document.getElementById("connectButton").style.display = "none";
                     document.getElementById("disconnectButton").style.display = "inline";
+                    document.getElementById("networkStatus").style.display = "block";
                     if (network != "Unknown")
                         document.getElementById("connectedSection").style.display = "block";
                     isConnected = true;
@@ -185,6 +186,7 @@
             document.getElementById("connectButton").style.display = "inline";
             document.getElementById("disconnectButton").style.display = "none";
             document.getElementById("connectedSection").style.display = "none";
+            document.getElementById("networkStatus").style.display = "none";
             ethereum.removeAllListeners();
             isConnected = false;
         }
