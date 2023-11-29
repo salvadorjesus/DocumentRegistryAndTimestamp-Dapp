@@ -387,9 +387,9 @@
                     searchResult.innerText = "Document registered by: \n";
 
                     documentEvents.forEach(event => {
-                        const eventInfo = `\nUser: ${event.returnValues.user}, 
-                                        Document Name: ${event.returnValues.documentName}, 
-                                        Description: ${event.returnValues.description}, 
+                        const eventInfo = `\nUser: ${event.returnValues.user} 
+                                        Document Name: ${event.returnValues.documentName} 
+                                        Description: ${event.returnValues.description} 
                                         Timestamp: ${new Date(parseInt(event.returnValues.timestamp) * 1000).toLocaleString()}\n`;
                         searchResult.innerText += eventInfo;
                     });
