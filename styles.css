@@ -49,6 +49,11 @@ select {
     padding: 8px;
 }
 
+textarea {
+    width: 100%;
+    resize: none; 
+}
+
 button:hover {
     box-shadow: 0 0 10px var(--shadow-color);
 }
