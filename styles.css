@@ -17,6 +17,11 @@
 body {
     background-color: var(--main-background-color);
     color: var(--text-color);
+    font-family: 'Montserrat', sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 /* Para títulos */
@@ -30,18 +35,11 @@ h6 {
     /* font-family: 'Roboto', sans-serif; */
     /* font-family: 'Montserrat', sans-serif; */
     /* font-family: 'Noto Serif', serif; */
-    
+}
+h1 {
+    text-align: center;
 }
 
-/* Para texto */
-body {
-    font-family: 'Montserrat', sans-serif;
-    /* font-family: 'Noto Serif', serif; */
-    /* font-family: 'Roboto', sans-serif; */
-    /* font-family: 'Lora', serif; */
-}
-
-/* Bordes y Espacios */
 button,
 input,
 select {
@@ -57,6 +55,12 @@ button:hover {
 
 img {
     filter: grayscale(50%);
+    max-height: 500px; 
+    width: auto; 
+    display: block;
+    margin: 10px auto; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 #connectedSection {
@@ -67,18 +71,18 @@ img {
 }
 
 .file-info-container {
-    background-color: #CAC6C6; /* Color de fondo diferente */
-    border-radius: 8px; /* Bordes redondeados */
-    font-family: 'Courier New', monospace; /* Letra que recuerde a consola */
-    color: #1a1a1a; /* Color del texto */
+    background-color: #CAC6C6; 
+    border-radius: 8px; 
+    font-family: 'Courier New', monospace;
+    color: #1a1a1a; 
     padding: 10px;
     margin-bottom: 20px;
     min-height: 4.8em;
 }
 
 .notification {
-    font-family: 'Courier New', monospace; /* Letra que recuerde a consola */
-    color: #ffe083; /* Color del texto */
+    font-family: 'Courier New', monospace; 
+    color: #ffe083; 
     font-size: 1.025em;
 }
 
