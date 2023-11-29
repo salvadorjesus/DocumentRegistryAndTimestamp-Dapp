@@ -78,12 +78,14 @@ img {
     padding: 10px;
     margin-bottom: 20px;
     min-height: 4.8em;
+    overflow-wrap: break-word;
 }
 
 .notification {
     font-family: 'Courier New', monospace; 
     color: #ffe083; 
     font-size: 1.025em;
+    overflow-wrap: break-word;
 }
 
 .file-info-container > p {
