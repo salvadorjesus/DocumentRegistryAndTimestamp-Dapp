@@ -7,6 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
     <script src="https://cdn.ethers.io/lib/ethers-5.4.umd.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.png" type="image/png" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
@@ -240,35 +241,66 @@
             searchDocumentButton.disabled = true;
 
             const file = fileInput.files[0];
+            const chunkSize = 1024 * 1024; // 1 MB chunks (adjust as needed)
+            const chunks = Math.ceil(file.size / chunkSize);
+            let currentChunk = 0;
+            let hash = CryptoJS.algo.SHA256.create();
 
             const reader = new FileReader();
             reader.onloadstart = function (event) {
                 progressBar.style.display = "block";
                 fileInput.disabled = true;
             };
-            reader.onprogress = function (event) {
-                if (event.lengthComputable) {
-                    const percentLoaded = Math.round((event.loaded / event.total) * 100);
-                    progressBar.value = percentLoaded;
-                    progressStatus.innerText = `Loading... ${percentLoaded}%`;
+            reader.onload = function (event) {
+                const chunkData = event.target.result;
+                hash.update(CryptoJS.lib.WordArray.create(new Uint8Array(chunkData)));
+
+                currentChunk++;
+
+                // Calculate and update the overall progress
+                const overallProgress = Math.round((currentChunk / chunks) * 100);
+                progressBar.value = overallProgress;
+                progressStatus.innerText = `Loading... ${overallProgress}%`;
+
+
+                if (currentChunk < chunks) {
+                    // Load the next chunk
+                    loadNextChunk();
+                } else {
+                    // All chunks loaded, finalize hash
+                    const finalHash = hash.finalize();
+                    documentHash = '0x' + finalHash.toString(CryptoJS.enc.Hex).substring(0, 64);
+                    hashResult.innerText = `Hash of the file: ${finalHash.toString()}`;
+
+                    fileNameInput.value = file.name;
+
+                    resetProgressBar();
                 }
             };
-            reader.onload = function (event) {
-                const fileData = event.target.result;
-                const wordArray = CryptoJS.enc.Utf8.parse(fileData);
-                const hash = CryptoJS.SHA256(wordArray);
-                documentHash = '0x' + hash.toString().substring(0, 64);;
-                hashResult.innerText = `Hash of the file: ${hash.toString()}`;
-                fileNameInput.value = file.name;
+            reader.onerror = function (event) {
+                console.error('Error reading chunk:', event);
+                resetProgressBar();
+            };
 
+            // Inner functions
+            function loadNextChunk() {
+                const startByte = currentChunk * chunkSize;
+                const endByte = Math.min(startByte + chunkSize, file.size);
+                const blob = file.slice(startByte, endByte);
+                reader.readAsArrayBuffer(blob);
+            }
+
+            function resetProgressBar() {
                 // Reset progress bar and enable input
                 progressBar.style.display = "none";
                 progressBar.value = 0;
                 fileInput.disabled = false;
                 addDocumentButton.disabled = false;
                 searchDocumentButton.disabled = false;
-            };
-            reader.readAsDataURL(file);
+            }
+
+            // Start reading the first chunk
+            loadNextChunk();
         }
 
         /*Functions for contract interaction*/
