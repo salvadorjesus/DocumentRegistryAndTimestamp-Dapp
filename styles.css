@@ -1,0 +1,92 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+:root {
+    --main-background-color: #5c7f9d;
+    --text-color: #fff;
+    --border-color: #fff;
+    --shadow-color: rgba(216, 255, 255, 0.8);
+    --connected-background-color: #203040;
+}
+
+body {
+    background-color: var(--main-background-color);
+    color: var(--text-color);
+    font-family: 'Montserrat', sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Lora', serif;
+}
+h1 {
+    text-align: center;
+}
+
+button,
+input,
+select {
+    border: 2px solid solid var(--border-color);
+    border-radius: 4px;
+    margin: 5px;
+    padding: 8px;
+}
+
+textarea {
+    width: 100%;
+    resize: none; 
+}
+
+button:hover {
+    box-shadow: 0 0 10px var(--shadow-color);
+}
+
+img {
+    filter: grayscale(50%);
+    max-height: 500px; 
+    width: auto; 
+    display: block;
+    margin: 10px auto; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+#connectedSection {
+    background-color: var(--connected-background-color);
+    border-radius: 10px; 
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.file-info-container {
+    background-color: #CAC6C6; 
+    border-radius: 8px; 
+    font-family: 'Courier New', monospace;
+    color: #1a1a1a; 
+    padding: 10px;
+    margin-bottom: 20px;
+    min-height: 4.8em;
+    overflow-wrap: break-word;
+}
+
+.notification {
+    font-family: 'Courier New', monospace; 
+    color: #ffe083; 
+    font-size: 1.025em;
+    overflow-wrap: break-word;
+}
+
+.file-info-container > p {
+    margin: 0;
+}
