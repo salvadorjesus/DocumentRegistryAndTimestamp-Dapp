@@ -437,6 +437,7 @@
             const selectedFileHash = document.getElementById('selectedFileHash');
             const selectedFileDescription = document.getElementById('selectedFileDescription');
             const selectedFileTimestamp = document.getElementById('selectedFileTimestamp');
+            const errorMessageElement = document.getElementById("registeredDocumentsErrorMessage");
 
             if (selectedOption && selectedOption.value) {
                 const optionValue = JSON.parse(selectedOption.value);
@@ -450,6 +451,7 @@
                 selectedFileHash.innerText = "";
                 selectedFileDescription.innerText = "";
                 selectedFileTimestamp.innerText = "";
+                errorMessageElement.innerText = "You haven't registered any document yet."
             }
         }
 
