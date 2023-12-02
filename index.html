@@ -231,8 +231,7 @@
             console.log("Changed network to: " + getNetworkName(chainID) + ". CONTRACT ADDRESS " + getContractAddress(chainID));
         }
 
-        function accountChanged (accounts)
-        {
+        function accountChanged(accounts) {
             currentAccount = accounts[0];
             resetDocumentInfo();
         }
@@ -321,14 +320,13 @@
                 const documentDescription = document.getElementById('fileDescription').value;
                 let donationAmount = document.getElementById("donationAmount").value;
                 let donationAmountInWei;
-                let etherscanLink;
+                let etherscanLink = "";
 
                 addDocumentButton.disabled = true;
 
                 const account = currentAccount;
                 const contract = await getContract();
                 // web3.eth.handleRevert = true;
-
 
                 //Ensure the validity of the donation amount.
                 //donationAmount = donationAmount.replace(',','.'); //<-Already done by element.value on declaration.
@@ -353,15 +351,15 @@
                             transactionInfo.innerHTML = "Document added to the blockchain. " + etherscanLink
                     })
                     .on('error', function (error) {
-                        console.error('Transaction error: ', error);
-                        transactionInfo.innerHTML = "Transaction error! " + etherscanLink;
+                        //console.error('Transaction error: ', error);
+                        if (error.message.toLowerCase().includes("user denied transaction"))
+                            transactionInfo.innerHTML = "Transaction cancelled by the user.";
+                        else
+                            transactionInfo.innerHTML = "Transaction error! " + etherscanLink;
                     });
 
             } catch (error) {
                 console.error('Error when calling AddDocumentToContract:', error);
-                //Skip if on error has already been called.
-                if (!transactionInfo.innerHTML.includes("error"))
-                    transactionInfo.innerHTML = "Transaction failed! " + etherscanLink;
             }
             finally {
                 addDocumentButton.disabled = false;
