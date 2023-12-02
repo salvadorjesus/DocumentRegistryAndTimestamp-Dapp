@@ -170,6 +170,9 @@
                     ethereum.on('chainChanged', (newChainID) => {
                         networkChanged(newChainID);
                     });
+                    ethereum.on('accountsChanged', (accounts) => {
+                        accountChanged(accounts);
+                    });
 
                     // Update UI
                     document.getElementById("connectButton").style.display = "none";
@@ -226,6 +229,12 @@
             resetDocumentInfo();
 
             console.log("Changed network to: " + getNetworkName(chainID) + ". CONTRACT ADDRESS " + getContractAddress(chainID));
+        }
+
+        function accountChanged (accounts)
+        {
+            currentAccount = accounts[0];
+            resetDocumentInfo();
         }
 
         function handleFile(fileInput) {
@@ -502,6 +511,7 @@
             return contract;
         }
 
+        /* Contract address book funcitons. */
         function getContractAddress(chainID) {
             let address = getAddressBookValue(chainID, "address");
             if (address === 'Unknown')
