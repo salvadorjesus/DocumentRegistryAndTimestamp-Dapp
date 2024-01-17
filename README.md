@@ -32,5 +32,9 @@ The Document Registry and Timestamp DApp is a decentralized application built us
 -	[Sepolia](https://sepolia.etherscan.io/address/0x5F86634F81a8b815Fe48eD71a62D29654dcd0364#code) (Ethereum test network).
 -	[Polygon](https://polygonscan.com/address/0x585d2a8688e4e84a283d7f02b5625c82f5cacb09).
 -	[Polygon Mumbay](https://mumbai.polygonscan.com/address/0x5f86634f81a8b815fe48ed71a62d29654dcd0364) (Polygon test network).
+
+## Running Tests
+To run the tests for this contract you need a Foundry project set up. Please read the README.md file of the _Foundry tests_ folder for further details.
+
 ## License
 This project is licensed under the MIT License - see the LICENSE.md file for details.
