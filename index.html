@@ -5,7 +5,6 @@
     <title>Web3 Document Registry</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.6.1/dist/web3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
-    <script src="https://cdn.ethers.io/lib/ethers-5.4.umd.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.png" type="image/png" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
@@ -326,7 +325,6 @@
 
                 const account = currentAccount;
                 const contract = await getContract();
-                // web3.eth.handleRevert = true;
 
                 //Ensure the validity of the donation amount.
                 //donationAmount = donationAmount.replace(',','.'); //<-Already done by element.value on declaration.
@@ -337,7 +335,7 @@
                 }
 
                 //Convert to WEI or equivalent to call the contract function.
-                donationAmountInWei = ethers.utils.parseEther(donationAmount);
+                donationAmountInWei = web3.utils.toWei(donationAmount, 'ether');
 
                 await contract.methods.addDocument(documentHash, documentName, documentDescription).send({ from: account, value: donationAmountInWei })
                     .on('transactionHash', function (hash) {
